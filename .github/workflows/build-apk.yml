@@ -1,0 +1,42 @@
+name: Build Android APK
+
+# Läuft automatisch bei jedem Push, und kann auch manuell über den "Actions"-Tab gestartet werden
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: ZIP-Datei entpacken (falls direkt hochgeladen)
+        run: |
+          if [ -f DamaskusmondApp-Android.zip ]; then
+            unzip -o DamaskusmondApp-Android.zip -d .
+          fi
+
+      - name: Java einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Android SDK einrichten
+        uses: android-actions/setup-android@v3
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Debug-APK bauen (sofort installierbar, ohne eigenen Signierschlüssel)
+        working-directory: DamaskusmondApp
+        run: gradle assembleDebug
+
+      - name: APK als Download bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: damaskusmond-app-debug
+          path: DamaskusmondApp/app/build/outputs/apk/debug/app-debug.apk
